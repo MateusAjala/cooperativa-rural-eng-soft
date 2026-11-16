@@ -1,0 +1,86 @@
+@startuml
+!pragma layout smetana
+skinparam dpi 150
+hide circle
+
+entity cooperados {
+  *id : SERIAL <<PK>>
+  --
+  *nome : VARCHAR(150)
+  *cpf_cnpj : VARCHAR(18) <<UNIQUE>>
+  *propriedade : VARCHAR(150)
+  telefone : VARCHAR(20)
+  *ativo : BOOLEAN
+}
+
+entity produtos {
+  *id : SERIAL <<PK>>
+  --
+  *nome : VARCHAR(100)
+  *unidade_medida : VARCHAR(20)
+  *preco_referencia : DECIMAL(10,2)
+  *saldo_estoque : DECIMAL(12,3)
+}
+
+entity entregas {
+  *id : SERIAL <<PK>>
+  --
+  *codigo_offline : VARCHAR(50) <<UNIQUE>>
+  *cooperado_id : INT <<FK>>
+  *data_entrega : TIMESTAMP
+  *status_sincronizacao : VARCHAR(20)
+}
+
+entity itens_entrega {
+  *id : SERIAL <<PK>>
+  --
+  *entrega_id : INT <<FK>>
+  *produto_id : INT <<FK>>
+  *quantidade : DECIMAL(12,3)
+}
+
+entity compradores {
+  *id : SERIAL <<PK>>
+  --
+  *razao_social : VARCHAR(150)
+  *cnpj : VARCHAR(18) <<UNIQUE>>
+  *cidade : VARCHAR(100)
+}
+
+entity vendas {
+  *id : SERIAL <<PK>>
+  --
+  *comprador_id : INT <<FK>>
+  *data_venda : TIMESTAMP
+  *valor_total : DECIMAL(12,2)
+}
+
+entity itens_venda {
+  *id : SERIAL <<PK>>
+  --
+  *venda_id : INT <<FK>>
+  *produto_id : INT <<FK>>
+  *quantidade : DECIMAL(12,3)
+  *preco_unitario : DECIMAL(10,2)
+}
+
+entity repasses {
+  *id : SERIAL <<PK>>
+  --
+  *cooperado_id : INT <<FK>>
+  *periodo_referencia : VARCHAR(7)
+  *valor_bruto : DECIMAL(12,2)
+  *taxa_cooperativa : DECIMAL(12,2)
+  *valor_liquido : DECIMAL(12,2)
+  *status_pagamento : VARCHAR(20)
+}
+
+cooperados ||--o{ entregas
+cooperados ||--o{ repasses
+entregas ||--|{ itens_entrega
+produtos ||--o{ itens_entrega
+compradores ||--o{ vendas
+vendas ||--|{ itens_venda
+produtos ||--o{ itens_venda
+
+@enduml

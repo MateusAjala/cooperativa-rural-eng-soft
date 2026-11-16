@@ -1,0 +1,39 @@
+@startuml
+!pragma layout smetana
+skinparam dpi 120
+skinparam nodesep 70
+skinparam ranksep 90
+skinparam padding 12
+left to right direction
+
+title Tema 4 - Cooperativa Rural: Diagrama de Implantação
+
+node "Celular do Produtor\n(Campo)" as Celular {
+  artifact "Aplicativo Mobile" as App
+  database "SQLite Local" as SQLite
+  App -- SQLite : Salva offline
+}
+
+node "Computador da Sede\n(Navegador)" as Sede {
+  artifact "Sistema Web" as Web
+}
+
+node "Servidor da Cooperativa\n(Docker)" as Servidor {
+  artifact "API (Backend)" as API
+}
+
+node "Servidor de Banco\n(Docker)" as Banco {
+  artifact "init.sql" as Init
+  database "PostgreSQL 16" as PG
+  Init ..> PG : Cria tabelas
+}
+
+App -- API : HTTPS (JSON)\nSincroniza entregas
+Web -- API : HTTPS\nGestão e vendas
+API -- PG : TCP/IP (5432)\nLê e grava dados
+
+note bottom of PG
+  Backup diário (pg_dump)
+  Retenção: 30 dias (RNF04)
+end note
+@enduml
