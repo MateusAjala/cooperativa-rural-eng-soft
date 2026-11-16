@@ -1,0 +1,48 @@
+@startuml
+!pragma layout smetana
+skinparam dpi 150
+autonumber
+
+actor "Cooperado" as Cooperado
+participant "App Mobile" as App
+database "SQLite Local" as SQLite
+participant "API Backend" as API
+database "PostgreSQL 16" as PG
+
+Cooperado -> App: Solicitar sincronização
+activate App
+App -> SQLite: Selecionar entregas pendentes\n(status PENDENTE no SQLite, lote <= 50)
+activate SQLite
+SQLite --> App: Entregas + itens_entrega
+deactivate SQLite
+
+App -> API: POST /sincronizacoes/entregas (lote, HTTPS/TLS)
+activate API
+API -> PG: BEGIN
+activate PG
+
+loop Para cada entrega do lote
+  API -> PG: INSERT em entregas (..., codigo_offline, status_sincronizacao)\n+ INSERT em itens_entrega (...)\n(idempotente por codigo_offline UNIQUE,\nex.: ON CONFLICT (codigo_offline) DO NOTHING - ADR 002)
+  PG --> API: inserido / conflito (já existente)
+  API -> API: Registrar resultado item a item
+end
+
+alt Lote processado com sucesso na transação
+  API -> PG: COMMIT
+  API --> App: Confirmação (itens aceitos / já sincronizados)
+else Erro transacional
+  API -> PG: ROLLBACK
+  API --> App: Falha do lote/rejeições para nova tentativa
+end
+deactivate PG
+deactivate API
+
+App -> SQLite: Atualizar fila local\n(remover/atualizar itens confirmados)
+activate SQLite
+SQLite --> App: OK
+deactivate SQLite
+
+App --> Cooperado: Exibir resumo da sincronização
+deactivate App
+
+@enduml

@@ -1,0 +1,104 @@
+@startuml
+!pragma layout smetana
+skinparam dpi 150
+hide circle
+skinparam classAttributeIconSize 0
+
+' Classes de domínio espelhando as tabelas/colunas de banco/init.sql
+
+class cooperados {
+  +id: SERIAL <<PK>>
+  +nome: VARCHAR(150)
+  +cpf_cnpj: VARCHAR(18) <<UNIQUE>>
+  +propriedade: VARCHAR(150)
+  +telefone: VARCHAR(20)
+  +ativo: BOOLEAN
+  --
+  +manterCadastro()
+}
+
+class produtos {
+  +id: SERIAL <<PK>>
+  +nome: VARCHAR(100)
+  +unidade_medida: VARCHAR(20)
+  +preco_referencia: DECIMAL(10,2)
+  +saldo_estoque: DECIMAL(12,3)
+  --
+  +manterCadastro()
+  +atualizarSaldo()
+}
+
+class entregas {
+  +id: SERIAL <<PK>>
+  +codigo_offline: VARCHAR(50) <<UNIQUE>>
+  +cooperado_id: INT <<FK>>
+  +data_entrega: TIMESTAMP
+  +status_sincronizacao: VARCHAR(20)
+  --
+  +registrarOffline()
+  +sincronizarLote()
+}
+
+class itens_entrega {
+  +id: SERIAL <<PK>>
+  +entrega_id: INT <<FK>>
+  +produto_id: INT <<FK>>
+  +quantidade: DECIMAL(12,3)
+  --
+  +registrarItem()
+  +corrigirQuantidade()
+}
+
+class compradores {
+  +id: SERIAL <<PK>>
+  +razao_social: VARCHAR(150)
+  +cnpj: VARCHAR(18) <<UNIQUE>>
+  +cidade: VARCHAR(100)
+  --
+  +manterCadastro()
+}
+
+class vendas {
+  +id: SERIAL <<PK>>
+  +comprador_id: INT <<FK>>
+  +data_venda: TIMESTAMP
+  +valor_total: DECIMAL(12,2)
+  --
+  +registrarVenda()
+  +calcularTotal()
+}
+
+class itens_venda {
+  +id: SERIAL <<PK>>
+  +venda_id: INT <<FK>>
+  +produto_id: INT <<FK>>
+  +quantidade: DECIMAL(12,3)
+  +preco_unitario: DECIMAL(10,2)
+  --
+  +validarEstoque()
+}
+
+class repasses {
+  +id: SERIAL <<PK>>
+  +cooperado_id: INT <<FK>>
+  +periodo_referencia: VARCHAR(7)
+  +valor_bruto: DECIMAL(12,2)
+  +taxa_cooperativa: DECIMAL(12,2)
+  +valor_liquido: DECIMAL(12,2)
+  +status_pagamento: VARCHAR(20)
+  --
+  +calcularFechar()
+  +registrarPagamento()
+  +emitirExtrato()
+}
+
+cooperados "1" -- "0..*" entregas : cooperado_id
+cooperados "1" -- "0..*" repasses : cooperado_id
+entregas "1" -- "1..*" itens_entrega : entrega_id
+produtos "1" -- "0..*" itens_entrega : produto_id
+
+compradores "1" -- "0..*" vendas : comprador_id
+vendas "1" -- "1..*" itens_venda : venda_id
+produtos "1" -- "0..*" itens_venda : produto_id
+
+@enduml

@@ -1,0 +1,52 @@
+@startuml
+!pragma layout smetana
+skinparam dpi 150
+left to right direction
+
+actor "Cooperado" as Cooperado
+actor "Gestor" as Gestor
+actor "Administrador" as Administrador
+
+Administrador --|> Gestor
+
+rectangle "Sistema Cooperativa Rural" {
+  usecase "UC01 - Manter Cadastros Base" as UC01
+  usecase "UC02 - Registrar Entrega no Campo" as UC02
+  usecase "UC03 - Sincronizar Entregas em Lote" as UC03
+  usecase "UC04 - Corrigir Quantidade de Entrega na Sede" as UC04
+  usecase "UC05 - Consultar Estoque Central" as UC05
+  usecase "UC06 - Registrar Venda Regional" as UC06
+  usecase "UC07 - Fechar Repasse Mensal" as UC07
+  usecase "UC08 - Registrar Pagamento de Repasse e Emitir Extrato" as UC08
+
+  usecase "Autenticar Usuário" as UA
+  usecase "Validar Estoque Disponível" as VE
+}
+
+Cooperado --> UC02
+Cooperado --> UC03
+Gestor --> UC01
+Gestor --> UC04
+Gestor --> UC05
+Gestor --> UC06
+Gestor --> UC07
+Gestor --> UC08
+
+UC03 .> UC02 : <<extend>>
+UC01 .> UA : <<include>>
+UC02 .> UA : <<include>>
+UC03 .> UA : <<include>>
+UC04 .> UA : <<include>>
+UC05 .> UA : <<include>>
+UC06 .> UA : <<include>>
+UC07 .> UA : <<include>>
+UC08 .> UA : <<include>>
+UC06 .> VE : <<include>>
+
+note right of UA
+  Login e perfis (Cooperado, Gestor,
+  Administrador) tratados na camada da API
+  (README / RNF03).
+end note
+
+@enduml

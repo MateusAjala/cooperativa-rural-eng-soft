@@ -1,0 +1,44 @@
+@startuml
+!pragma layout smetana
+skinparam dpi 150
+autonumber
+
+actor "Gestor" as Gestor
+participant "Sistema Web" as Web
+participant "API Backend" as API
+database "PostgreSQL 16" as PG
+
+Gestor -> Web: Informar cooperado_id e periodo_referencia (AAAA-MM)
+activate Web
+Web -> API: POST /repasses/fechamento
+activate API
+
+API -> PG: Consultar repasses existentes\nWHERE cooperado_id = ? AND periodo_referencia = ?
+activate PG
+PG --> API: Resultado
+deactivate PG
+
+alt Repasse já existente para o período
+  API --> Web: Bloquear duplicidade e retornar registro existente
+  Web --> Gestor: Exibir repasse já registrado
+else Sem repasse duplicado
+  API -> PG: Apurar base do período\n(entregas/itens_entrega sincronizados, com correções aplicadas\nconforme regras da aplicação)
+  activate PG
+  PG --> API: Dados para cálculo
+  deactivate PG
+
+  API -> API: Calcular valor_bruto,\ntaxa_cooperativa e valor_liquido
+
+  API -> PG: INSERT INTO repasses\n(cooperado_id, periodo_referencia, valor_bruto,\ntaxa_cooperativa, valor_liquido, status_pagamento)
+  activate PG
+  PG --> API: Repasse registrado (ex.: status_pagamento='PENDENTE')
+  deactivate PG
+
+  API --> Web: Sucesso + resumo do repasse
+  Web --> Gestor: Exibir valores e confirmação do fechamento
+end
+
+deactivate API
+deactivate Web
+
+@enduml
